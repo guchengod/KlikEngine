@@ -5719,6 +5719,23 @@ INSERT INTO `hg_sys_sms_log` (`id`, `event`, `mobile`, `code`, `times`, `ip`, `s
 -- 表的结构 `hg_test_category`
 --
 
+ALTER TABLE `hg_admin_member` 
+ADD COLUMN `short_id` VARCHAR(20) DEFAULT '' COMMENT '短ID' AFTER `username`,
+ADD COLUMN `unique_id` VARCHAR(50) DEFAULT '' COMMENT '唯一ID' AFTER `short_id`,
+ADD COLUMN `signature` VARCHAR(255) DEFAULT '' COMMENT '签名' AFTER `real_name`,
+ADD COLUMN `ip_location` VARCHAR(50) DEFAULT '' COMMENT 'IP属地' AFTER `address`,
+ADD COLUMN `follower_count` INT DEFAULT 0 COMMENT '粉丝数' AFTER `balance`,
+ADD COLUMN `following_count` INT DEFAULT 0 COMMENT '关注数' AFTER `follower_count`,
+ADD COLUMN `aweme_count` INT DEFAULT 0 COMMENT '作品数' AFTER `following_count`,
+ADD COLUMN `total_favorited` BIGINT DEFAULT 0 COMMENT '获赞总数' AFTER `aweme_count`,
+ADD COLUMN `commerce_user_level` TINYINT DEFAULT 0 COMMENT '电商用户等级' AFTER `total_favorited`,
+ADD COLUMN `is_verified` BOOLEAN DEFAULT FALSE COMMENT '是否认证' AFTER `commerce_user_level`,
+
+-- 添加索引
+ADD INDEX `idx_short_id` (`short_id`),
+ADD INDEX `idx_unique_id` (`unique_id`),
+ADD INDEX `idx_follower_count` (`follower_count`);
+
 CREATE TABLE IF NOT EXISTS `hg_test_category` (
   `id` bigint(20) NOT NULL COMMENT '分类ID',
   `name` varchar(255) NOT NULL COMMENT '分类名称',
@@ -5731,6 +5748,134 @@ CREATE TABLE IF NOT EXISTS `hg_test_category` (
   `updated_at` datetime DEFAULT NULL COMMENT '修改时间',
   `deleted_at` datetime DEFAULT NULL COMMENT '删除时间'
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='测试分类';
+
+
+
+
+
+-- 视频主表：存储所有视频基本信息
+CREATE TABLE hg_videos (
+    aweme_id BIGINT PRIMARY KEY COMMENT '抖音视频唯一ID，主键',
+    user_id BIGINT NOT NULL COMMENT '发布视频的用户ID，关联hg_admin_member表',
+    description TEXT COMMENT '视频描述/文案内容',
+    created_at TIMESTAMP NOT NULL COMMENT '视频创建时间（抖音原始时间戳）',
+    duration INT COMMENT '视频时长，单位毫秒',
+    share_url VARCHAR(255) COMMENT '视频分享链接',
+    digg_count INT DEFAULT 0 COMMENT '点赞数',
+    comment_count INT DEFAULT 0 COMMENT '评论数',
+    collect_count INT DEFAULT 0 COMMENT '收藏数',
+    share_count INT DEFAULT 0 COMMENT '分享数',
+    play_count INT DEFAULT 0 COMMENT '播放数',
+    is_top BOOLEAN DEFAULT FALSE COMMENT '是否置顶：0-否 1-是',
+    is_delete BOOLEAN DEFAULT FALSE COMMENT '是否删除：0-正常 1-已删除',
+    allow_share BOOLEAN DEFAULT TRUE COMMENT '是否允许分享：0-不允许 1-允许',
+    is_prohibited BOOLEAN DEFAULT FALSE COMMENT '是否被禁止：0-正常 1-被禁止',
+    prevent_download BOOLEAN DEFAULT FALSE COMMENT '是否禁止下载：0-允许 1-禁止',
+    width INT COMMENT '视频宽度（像素）',
+    height INT COMMENT '视频高度（像素）',
+    ratio VARCHAR(20) COMMENT '视频比例，如1080p,720p等',
+    video_uri VARCHAR(255) COMMENT '视频资源URI',
+    video_url VARCHAR(255) COMMENT '视频播放URL',
+    cover_uri VARCHAR(255) COMMENT '封面图URI',
+    cover_url VARCHAR(255) COMMENT '封面图URL',
+    created_atstamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '系统记录创建时间',
+    updated_atstamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '系统记录更新时间',
+    FOREIGN KEY (user_id) REFERENCES hg_admin_member(id),
+    INDEX idx_user_id (user_id) COMMENT '用户ID索引，方便按用户查询',
+    INDEX idx_created_at (created_at) COMMENT '创建时间索引，用于时间排序',
+    INDEX idx_digg_count (digg_count) COMMENT '点赞数索引，用于热门排序'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频主表';
+
+-- 音乐表：存储视频使用的音乐信息
+CREATE TABLE hg_musics (
+    music_id BIGINT PRIMARY KEY COMMENT '音乐唯一ID，主键',
+    title VARCHAR(100) NOT NULL COMMENT '音乐标题',
+    author VARCHAR(100) COMMENT '音乐作者',
+    cover_url VARCHAR(255) COMMENT '音乐封面URL',
+    play_url VARCHAR(255) COMMENT '音乐播放URL',
+    duration INT COMMENT '音乐时长，单位秒',
+    is_original BOOLEAN DEFAULT FALSE COMMENT '是否原创：0-非原创 1-原创',
+    user_count INT DEFAULT 0 COMMENT '使用人数统计',
+    owner_id VARCHAR(50) COMMENT '音乐所有者ID',
+    owner_nickname VARCHAR(100) COMMENT '音乐所有者昵称',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
+    INDEX idx_title (title) COMMENT '音乐标题索引，方便搜索',
+    INDEX idx_author (author) COMMENT '作者索引，方便按作者查询'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='音乐信息表';
+
+-- 视频音乐关联表：记录视频与音乐的对应关系
+CREATE TABLE hg_video_music (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增主键',
+    aweme_id BIGINT NOT NULL COMMENT '视频ID，关联hg_videos表',
+    music_id BIGINT NOT NULL COMMENT '音乐ID，关联hg_musics表',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '关联关系创建时间',
+    FOREIGN KEY (aweme_id) REFERENCES hg_videos(aweme_id) ON DELETE CASCADE,
+    FOREIGN KEY (music_id) REFERENCES hg_musics(music_id) ON DELETE CASCADE,
+    UNIQUE KEY uk_video_music (aweme_id, music_id) COMMENT '视频音乐唯一约束，避免重复关联'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频音乐关联表';
+
+-- 话题标签表：存储视频使用的话题标签
+CREATE TABLE hg_hashtags (
+    hashtag_id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '话题标签ID，自增主键',
+    name VARCHAR(100) NOT NULL COMMENT '话题标签名称',
+    view_count BIGINT DEFAULT 0 COMMENT '话题浏览次数',
+    use_count BIGINT DEFAULT 0 COMMENT '话题被使用次数',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '话题创建时间',
+    UNIQUE KEY uk_name (name) COMMENT '话题名称唯一索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='话题标签表';
+
+-- 视频话题关联表：记录视频与话题的对应关系
+CREATE TABLE hg_video_hashtag (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增主键',
+    aweme_id BIGINT NOT NULL COMMENT '视频ID，关联hg_videos表',
+    hashtag_id BIGINT NOT NULL COMMENT '话题ID，关联hg_hashtags表',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '关联关系创建时间',
+    FOREIGN KEY (aweme_id) REFERENCES hg_videos(aweme_id) ON DELETE CASCADE,
+    FOREIGN KEY (hashtag_id) REFERENCES hg_hashtags(hashtag_id) ON DELETE CASCADE,
+    UNIQUE KEY uk_video_hashtag (aweme_id, hashtag_id) COMMENT '视频话题唯一约束，避免重复关联'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频话题关联表';
+
+-- 评论表：存储视频的评论信息
+CREATE TABLE hg_comments (
+    comment_id BIGINT PRIMARY KEY COMMENT '评论ID，主键',
+    aweme_id BIGINT NOT NULL COMMENT '所属视频ID，关联hg_videos表',
+    user_id BIGINT NOT NULL COMMENT '评论用户ID，关联hg_admin_member表',
+    content TEXT NOT NULL COMMENT '评论内容',
+    digg_count INT DEFAULT 0 COMMENT '评论点赞数',
+    reply_count INT DEFAULT 0 COMMENT '回复数',
+    created_at TIMESTAMP NOT NULL COMMENT '评论创建时间',
+    is_author BOOLEAN DEFAULT FALSE COMMENT '是否作者回复：0-否 1-是',
+    is_delete BOOLEAN DEFAULT FALSE COMMENT '是否删除：0-正常 1-已删除',
+    FOREIGN KEY (aweme_id) REFERENCES hg_videos(aweme_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES hg_admin_member(id) ON DELETE CASCADE,
+    INDEX idx_aweme_id (aweme_id) COMMENT '视频ID索引，方便按视频查评论',
+    INDEX idx_user_id (user_id) COMMENT '用户ID索引，方便按用户查评论',
+    INDEX idx_created_at (created_at) COMMENT '创建时间索引，用于时间排序'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频评论表';
+
+-- 搜索建议词表：存储系统推荐的搜索关键词
+CREATE TABLE hg_suggest_words (
+    word_id BIGINT PRIMARY KEY COMMENT '关键词ID，主键',
+    word VARCHAR(100) NOT NULL COMMENT '关键词内容',
+    scene VARCHAR(50) COMMENT '出现场景：comment_top_rec-评论顶部推荐 feed_bottom_rec-信息流底部推荐',
+    hint_text VARCHAR(100) COMMENT '提示文本，如"大家都在搜："',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
+    INDEX idx_word (word) COMMENT '关键词索引，方便搜索',
+    INDEX idx_scene (scene) COMMENT '场景索引，方便按场景查询'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='搜索建议词表';
+
+-- 视频搜索词关联表：记录视频与搜索建议词的对应关系
+CREATE TABLE hg_video_suggest_word (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增主键',
+    aweme_id BIGINT NOT NULL COMMENT '视频ID，关联hg_videos表',
+    word_id BIGINT NOT NULL COMMENT '关键词ID，关联hg_suggest_words表',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '关联关系创建时间',
+    FOREIGN KEY (aweme_id) REFERENCES hg_videos(aweme_id) ON DELETE CASCADE,
+    FOREIGN KEY (word_id) REFERENCES hg_suggest_words(word_id) ON DELETE CASCADE,
+    UNIQUE KEY uk_video_word (aweme_id, word_id) COMMENT '视频关键词唯一约束，避免重复关联'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='视频搜索词关联表';
 
 --
 -- 转存表中的数据 `hg_test_category`
