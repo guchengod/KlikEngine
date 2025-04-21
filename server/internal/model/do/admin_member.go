@@ -17,12 +17,21 @@ type AdminMember struct {
 	DeptId             interface{} // 部门ID
 	RoleId             interface{} // 角色ID
 	RealName           interface{} // 真实姓名
+	Signature          interface{} // 签名
 	Username           interface{} // 帐号
+	ShortId            interface{} // 短ID
+	UniqueId           interface{} // 唯一ID
 	PasswordHash       interface{} // 密码
 	Salt               interface{} // 密码盐
 	PasswordResetToken interface{} // 密码重置令牌
 	Integral           interface{} // 积分
 	Balance            interface{} // 余额
+	FollowerCount      interface{} // 粉丝数
+	FollowingCount     interface{} // 关注数
+	AwemeCount         interface{} // 作品数
+	TotalFavorited     interface{} // 获赞总数
+	CommerceUserLevel  interface{} // 电商用户等级
+	IsVerified         interface{} // 是否认证
 	Avatar             interface{} // 头像
 	Sex                interface{} // 性别
 	Qq                 interface{} // qq
@@ -31,6 +40,7 @@ type AdminMember struct {
 	Birthday           *gtime.Time // 生日
 	CityId             interface{} // 城市编码
 	Address            interface{} // 联系地址
+	IpLocation         interface{} // IP属地
 	Pid                interface{} // 上级管理员ID
 	Level              interface{} // 关系树等级
 	Tree               interface{} // 关系树

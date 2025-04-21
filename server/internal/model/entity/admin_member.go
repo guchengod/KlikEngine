@@ -15,12 +15,21 @@ type AdminMember struct {
 	DeptId             int64       `json:"deptId"             orm:"dept_id"              description:"部门ID"`
 	RoleId             int64       `json:"roleId"             orm:"role_id"              description:"角色ID"`
 	RealName           string      `json:"realName"           orm:"real_name"            description:"真实姓名"`
+	Signature          string      `json:"signature"          orm:"signature"            description:"签名"`
 	Username           string      `json:"username"           orm:"username"             description:"帐号"`
+	ShortId            string      `json:"shortId"            orm:"short_id"             description:"短ID"`
+	UniqueId           string      `json:"uniqueId"           orm:"unique_id"            description:"唯一ID"`
 	PasswordHash       string      `json:"passwordHash"       orm:"password_hash"        description:"密码"`
 	Salt               string      `json:"salt"               orm:"salt"                 description:"密码盐"`
 	PasswordResetToken string      `json:"passwordResetToken" orm:"password_reset_token" description:"密码重置令牌"`
 	Integral           float64     `json:"integral"           orm:"integral"             description:"积分"`
 	Balance            float64     `json:"balance"            orm:"balance"              description:"余额"`
+	FollowerCount      int         `json:"followerCount"      orm:"follower_count"       description:"粉丝数"`
+	FollowingCount     int         `json:"followingCount"     orm:"following_count"      description:"关注数"`
+	AwemeCount         int         `json:"awemeCount"         orm:"aweme_count"          description:"作品数"`
+	TotalFavorited     int64       `json:"totalFavorited"     orm:"total_favorited"      description:"获赞总数"`
+	CommerceUserLevel  int         `json:"commerceUserLevel"  orm:"commerce_user_level"  description:"电商用户等级"`
+	IsVerified         int         `json:"isVerified"         orm:"is_verified"          description:"是否认证"`
 	Avatar             string      `json:"avatar"             orm:"avatar"               description:"头像"`
 	Sex                int         `json:"sex"                orm:"sex"                  description:"性别"`
 	Qq                 string      `json:"qq"                 orm:"qq"                   description:"qq"`
@@ -29,6 +38,7 @@ type AdminMember struct {
 	Birthday           *gtime.Time `json:"birthday"           orm:"birthday"             description:"生日"`
 	CityId             int64       `json:"cityId"             orm:"city_id"              description:"城市编码"`
 	Address            string      `json:"address"            orm:"address"              description:"联系地址"`
+	IpLocation         string      `json:"ipLocation"         orm:"ip_location"          description:"IP属地"`
 	Pid                int64       `json:"pid"                orm:"pid"                  description:"上级管理员ID"`
 	Level              int         `json:"level"              orm:"level"                description:"关系树等级"`
 	Tree               string      `json:"tree"               orm:"tree"                 description:"关系树"`
